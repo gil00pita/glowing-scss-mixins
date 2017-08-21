@@ -1,0 +1,65 @@
+{
+  "name": "glowing-scss-mixins",
+  "version": "1.0.0",
+  "description": "A SCSS Mixins starter kit",
+  "main": "gulpfile.babel.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "gulp",
+    "sass",
+    "scss",
+    "html",
+    "boilerplate",
+    "static"
+  ],
+  "author": "Gil Alvaro",
+  "license": "MIT",
+  "devDependencies": {
+    "babel-core": "^6.3.17",
+    "babel-preset-es2015": "^6.3.13",
+    "backstopjs": "^3.0.14",
+    "browser-sync": "^2.18.8",
+    "file-loader": "^0.11.1",
+    "gulp": "^3.9.1",
+    "gulp-babel": "^7.0.0",
+    "gulp-combine-mq": "^0.4.0",
+    "gulp-concat": "^2.6.1",
+    "gulp-csscomb": "^3.0.8",
+    "gulp-cssnano": "^2.1.2",
+    "gulp-livingcss": "^2.1.0",
+    "gulp-notify": "^3.0.0",
+    "gulp-plumber": "^1.1.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-rimraf": "^0.2.1",
+    "gulp-sass": "^3.1.0",
+    "gulp-sequence": "^0.4.6",
+    "gulp-sourcemaps": "^2.5.0",
+    "gulp-strip-css-comments": "^1.2.0",
+    "gulp-stylelint": "^4.0.0",
+    "gulp-uglify": "^3.0.0",
+    "livingcss": "^4.3.1",
+    "merge-stream": "^1.0.1",
+    "stylelint": "^8.0.0",
+    "stylelint-scss": "^2.0.0",
+    "stylelint-selector-bem-pattern": "^1.1.0"
+  },
+  "babel": {
+    "presets": [
+      "es2015"
+    ]
+  },
+  "dependencies": {
+    "lodash": "^4.17.4",
+    "lodash.assign": "^4.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gil00pita/glowing-scss-mixins.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gil00pita/glowing-scss-mixins/issues"
+  },
+  "homepage": "https://github.com/gil00pita/glowing-scss-mixins/blob/master/README.md"
+}

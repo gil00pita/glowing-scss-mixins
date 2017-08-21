@@ -1,0 +1,1916 @@
+﻿// @import "../settings/palette",
+//     "../settings/vars",
+//     "../tools/functions";
+// styleguide:ignore:start
+$vendors: (
+        "-webkit-", /* Chrome/Safari/Opera */
+        "-khtml-", /* Konqueror */
+        "-moz-", /* Firefox */
+        "-ms-", /* Internet Explorer/Edge */
+        "-o-", /* Opera */
+        "" /* Non-prefixed version */
+    );
+
+//TODO: Finish this comments
+
+/*  ==========================================================================
+    MIXINS FOR THE LAZY PEOPLE & TO MAXIMIZE COMPATIBILITY
+    ==========================================================================
+    selection;                                          # Change color of selection
+    opacity(0.8)                                        # Change opacity
+    box-sizing(border-box)                              # The box-sizing property is used to tell the browser what the
+                                                          sizing properties (width and height)
+                                                          (http://www.w3schools.com/cssref/css3_pr_box-sizing.asp)
+    user-select(none)                                   # Controls the actual Selection operation, represents the range of
+                                                          text selected by the user or the current position of the caret.
+    no-select()                                         # Doesn't allow select.
+    line-height(2)                                      # Add line height rem and ox
+    position(absolute, $top: 10px, $left: 10px);        # Set position on absolute, top, bottom, left, right
+    size(2,3)                                           # width and height of an object
+    filter: contrast(200%)                              # Provides graphical effects like blurring, sharpening, or color
+                                                          shifting an element. Filters are commonly used to adjust the
+                                                          rendering of images, backgrounds, and borders.
+                                                          (https://developer.mozilla.org/en/docs/Web/CSS/filter)
+    hyphens                                             # Tells the browser how to hyphenate words when line-wrapping.
+                                                          You can prevent hyphenation entirely, control when the browser
+                                                          should hyphenate, or let the browser control when to hyphenate.
+    font-face("gotham", "/fonts/gotham")                # It allows control of the source of the font…font face, being a URL
+    better-font                                         # Better Font Rendering
+    ligature                                            # Enable Ligatures
+    font-size(12)                                       # Enable px and its rem for font size
+    border-radius(2)                                    # Set the 4 corners of border radius
+    border-radius-separate(2,3,2,4)                     # Set the individual corners of border radius
+    box-shadow(10px 10px 5px #888888)                   # The box-shadow property attaches one or more shadows to an element.
+    text-shadow( 2px 2px #ff0000;)                      # The text-shadow property adds shadow to text.
+    keyframes(animationName) { [content] }              # For best browser support, you should always define both the 0%
+                                                          and the 100% selectors.
+    animation("slide-down 5s 3")                        # Animation type
+    linear-gradient(-90deg, red, yellow)                # linear-gradient(direction, color-stop1, color-stop2, ...);
+    radial-gradient(red 5%, yellow 15%, green 60%)      # radial-gradient(shape size at position, start-color, ..., last-color);
+    gradient-horizontal(...)                            # linear-gradient
+    gradient-vertical(...)                              # linear-gradient
+    gradient-directional(...)                           # linear-gradient
+    gradient-horizontal-three-colors(...)               # linear-gradient
+    gradient-vertical-three-colors(...)                 # linear-radial
+    gradient-radial(...)                                # linear-gradient
+    gradient-striped(...)                               # linear-gradient
+    repeating-radial-gradient(...)                      # repeating-radial-gradient
+    transform()                                         # This property allows you to rotate, scale, move, skew, etc., elements.
+    rotate()                                            # Rotate an element in degrees
+    scale()                                             #
+    skew()                                              #
+    translate()                                         #
+    transform-origin()                                  #
+    ha / translate3d()                                  #
+    center-both()                                       # Center object in absolute position with parent as relative
+    center-x()                                          # Same but only horizontally
+    center-y()                                          # Same but only vertically
+    position()                                          #
+    transition()                                        #
+
+    // FLEX BOX
+
+    flexbox                                             # Flexbox compatibility
+    inline-flex                                         # Same
+    flex-direction / flex-dir                           # Same
+    flex-wrap                                           # Same
+    flex-flow                                           # Same
+    flex-order / order                                  # Same
+    flex-grow                                           # Same
+    flex-shrink                                         # Same
+    flex-basis                                          # Same
+    flex                                                # Same
+    justify-content                                     # Same
+    flex-just                                           # Same
+    align-items                                         # Same
+    align-self                                          # Same
+    align-content                                       # Same
+
+    column-count                                        #
+    clearfix                                            #
+
+    //SHADOWS
+
+    customShadow                                        #
+    focus-shadow                                        #
+    shadow-2dp                                          #
+    shadow-3dp                                          #
+    shadow-4dp                                          #
+    shadow-6dp                                          #
+    shadow-8dp                                          #
+    shadow-16dp                                         #
+    shadow-24dp                                         #
+
+    trucane                                             #
+*/
+
+/* ==========================================================================
+   # Breakpoint Mixin
+   ========================================================================== */
+
+@mixin breakpoint($query, $no-query: false) {
+    @include legacy-settings-warning;
+
+    // Reset contexts
+    @include private-breakpoint-reset-contexts();
+
+    $breakpoint: breakpoint($query, false);
+
+    $query-string: map-get($breakpoint, "query");
+    $query-fallback: map-get($breakpoint, "fallback");
+
+    $private-breakpoint-context-holder: map-get($breakpoint, "context holder") !global;
+    $private-breakpoint-query-count: map-get($breakpoint, "query count") !global;
+
+    // Allow for an as-needed override or usage of no query fallback.
+    @if $no-query != false {
+        $query-fallback: $no-query;
+    }
+
+    @if $query-fallback != false {
+        $context-setter: private-breakpoint-set-context("no-query", $query-fallback);
+    }
+
+    // Print Out Query String
+    @if not breakpoint-get("no queries") {
+        @media #{$query-string} {
+            @content;
+        }
+    }
+
+    @if breakpoint-get("no query fallbacks") != false or breakpoint-get("no queries") == true {
+
+        $type: type-of(breakpoint-get("no query fallbacks"));
+        $print: false;
+
+        @if ($type == "bool") {
+            $print: true;
+        }
+        @else if ($type == "string") {
+            @if $query-fallback == breakpoint-get("no query fallbacks") {
+                $print: true;
+            }
+        }
+        @else if ($type == "list") {
+            @each $wrapper in breakpoint-get("no query fallbacks") {
+                @if $query-fallback == $wrapper {
+                    $print: true;
+                }
+            }
+        }
+
+        // Write Fallback
+        @if ($query-fallback != false) and ($print == true) {
+            $type-fallback: type-of($query-fallback);
+
+            @if ($type-fallback != "bool") {
+                #{$query-fallback} & {
+                    @content;
+                }
+            }
+            @else {
+                @content;
+            }
+        }
+    }
+
+    @include private-breakpoint-reset-contexts();
+}
+
+@mixin mq($query, $no-query: false) {
+    @include breakpoint($query, $no-query) {
+        @content;
+    }
+}
+
+/* ==========================================================================
+   # Browsers Support
+     Usage: @include prefixProperty(user-select, none);
+   ========================================================================== */
+
+@mixin prefixProperty($property, $value...) {
+    @each $key in $vendors {
+        #{$key}#{$property}: #{$value};
+    }
+}
+
+@mixin prefixValue($property, $value...) {
+    @each $key in $vendors {
+        #{$property}: #{$key}#{$value};
+    }
+}
+
+@mixin prefixContent($property, $pseudo: "") {
+    @each $key in $vendors {
+        #{$pseudo}#{$key}#{$property} {
+            @content;
+        }
+    }
+}
+
+/* ==========================================================================
+   # Selection
+     Change color of selection
+     Usage: @include selection(red);
+   ========================================================================== */
+
+@mixin selection($background:000, $color:#fff) {
+    //@include prefixContent(selection, "&::"){
+    //  color: $color;
+    //  background-color: $background;
+    //}
+    &::-moz-selection {
+        color: $color;
+        background-color: $background;
+    }
+
+    &::selection {
+        color: $color;
+        background-color: $background;
+    }
+}
+
+/* ==========================================================================
+   # Opacity
+     Usage: @include opacity(0.8);
+   ========================================================================== */
+
+@mixin opacity($opacity) {
+    zoom: 1;
+    -ms-filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=#{$opacity * 100});
+    filter: alpha(opacity=$opacity * 100);
+    opacity: $opacity;
+}
+
+/* ==========================================================================
+   # Opacity
+     Usage:
+      *,
+      *:after,
+      *:before {
+        @include box-sizing(border-box);
+      }
+   ========================================================================== */
+
+@mixin box-sizing($box-model) {
+    @include prefixProperty(box-sizing, $box-model);
+}
+
+/* ==========================================================================
+   # user-select
+     Usage: @include user-select(none);
+   ========================================================================== */
+
+@mixin user-select($value) {
+    -webkit-touch-callout: $value;
+    @include prefixProperty(user-select, $value);
+}
+
+/* ==========================================================================
+   # no-select
+     Usage: @include no-select();
+   ========================================================================== */
+
+@mixin no-select() {
+    @include user-select(none);
+}
+
+/* ==========================================================================
+   # Line Height.
+     Usage: @include line-height(12);
+   ========================================================================== */
+
+@mixin line-height($height-value: 12) {
+    line-height: $height-value * 1px; //fallback for old browsers
+    line-height: rem($height-value);
+}
+
+/* ==========================================================================
+   # Shorthandizes position declarations.
+   Usage:
+   @example scss - Usage
+     .foo {
+       @include position(absolute, $top: 10px, $left: 10px);
+     }
+   ========================================================================== */
+
+@mixin position($type, $top: null, $right: null, $bottom: null, $left: null) {
+    position: $type;
+
+    @if (is-unit($top) OR is-absolute-length($top) OR is-relative-length($top)) {
+        top: $top;
+    }
+    @else if (is-int($top)) {
+        right: #{$top}px;
+    }
+
+    @if (is-unit($right) OR is-absolute-length($right) OR is-relative-length($right)) {
+        right: $right;
+    }
+    @else if (is-int($right)) {
+        right: #{$right}px;
+    }
+
+    @if (is-unit($bottom) OR is-absolute-length($bottom) OR is-relative-length($bottom)) {
+        top: $bottom;
+    }
+    @else if (is-int($bottom)) {
+        right: #{$bottom}px;
+    }
+
+    @if (is-unit($left) OR is-absolute-length($left) OR is-relative-length($left)) {
+        left: $left;
+    }
+    @else if (is-int($left)) {
+        left: #{$left}px;
+    }
+}
+
+@mixin full-size-parent() {
+    @include position(absolute, 0, 0, 0, 0);
+}
+
+/* ==========================================================================
+   # Sizing helper.
+   Usage:
+   foo {
+      @include size(350px);
+   }
+   ========================================================================== */
+
+@mixin size($width, $height: $width) {
+    @if (is-unit($width) OR is-absolute-length($width) OR is-relative-length($width)) {
+        top: $width;
+    }
+    @else if (is-int($width)) {
+        right: #{$width}px;
+    }
+
+    @if (is-unit($height) OR is-absolute-length($height) OR is-relative-length($height)) {
+        left: $height;
+    }
+    @else if (is-int($height)) {
+        left: #{$height}px;
+    }
+}
+
+/* ==========================================================================
+   # Browsers Support
+     https://dvcs.w3.org/hg/FXTF/raw-file/tip/filters/index.html
+     Usage:
+     grayscale      ex: filter: grayscale(100%);
+     sepia          ex: filter: sepia(100%);
+     saturate       ex: filter: saturate(0%);
+     hue-rotate     ex: filter: hue-rotate(45deg);
+     invert         ex: filter: invert(100%);
+     brightness     ex: filter: brightness(15%);
+     contrast       ex: filter: contrast(200%);
+     blur           ex: filter: blur(2px);
+   ========================================================================== */
+
+@mixin filter($filter-type, $filter-amount) {
+    @if (is-int($filter-amount)) {
+        @include prefixProperty(filter, $filter-type+unquote("(#{$filter-amount}px)"));
+    }
+    @else {
+        @include prefixProperty(filter, $filter-type+unquote("(#{$filter-amount})"));
+    }
+}
+
+/* ==========================================================================
+   # Transform Style
+     Usage:
+   ========================================================================== */
+
+@mixin transform-style($val) {
+    @include prefixProperty(transform-style, $val);
+}
+
+/* ==========================================================================
+   # Transform Style
+     Usage:
+   ========================================================================== */
+
+@mixin backface-visibility($val) {
+    @include prefixProperty(backface-visibility, $val);
+}
+
+/* ==========================================================================
+   # Place Holder for input text areas...
+     Usage:
+   ========================================================================== */
+//
+//@mixin placeholder() {
+//  @include prefixContent(placeholder, "&:") {
+//    @content;
+//  }
+//}
+
+@mixin placeholder() {
+    $property: input-placeholder;
+
+    @each $key in $vendors {
+        #{$key} {
+            @content;
+        }
+
+        &::#{$key}#{$property} {
+            @content;
+        }
+    }
+
+    &:-moz-placeholder { /* Firefox 18- */
+        @content;
+    }
+
+    &:-ms-input-placeholder {
+        @content;
+    }
+}
+
+/* ==========================================================================
+   # Hyphens
+     Usage:
+   ========================================================================== */
+
+@mixin hyphens() {
+    @include prefixProperty(hyphens, auto);
+}
+
+/* ==========================================================================
+   # Typography
+     Usage:
+     font-face("gotham", "/fonts/gotham");            # Import font files
+     better-font                                      # Better Font Rendering
+     ligature                                         # Enable Ligatures
+     font-size(16px)                                  # convert font size px to rem
+   ========================================================================== */
+
+@mixin font-face($font-name, $file-name, $weight: normal, $style: normal) {
+    @font-face {
+        font-family: quote($font-name);
+        src: url("../" + $file-name + ".eot");
+        src:
+            url("../" + $file-name + ".eot?#iefix") format("embedded-opentype"),
+            url("../" + $file-name + ".woff") format("woff"),
+            url("../" + $file-name + ".ttf") format("truetype"),
+            url("../" + $file-name + ".svg##{$font-name}") format("svg");
+        font-style: $style;
+        font-weight: $weight;
+    }
+}
+
+@mixin better-font() {
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    //vertical-align: middle;
+}
+
+@mixin font-smoothing() {
+    @include better-font();
+}
+
+@mixin ligature() {
+    //-webkit-font-feature-settings: "liga";
+    -moz-font-feature-settings: "liga=1";
+    //-moz-font-feature-settings: "liga";
+    -ms-font-feature-settings: "liga" 1;
+    //-o-font-feature-settings: "liga";
+    //font-feature-settings: "liga";
+    @include prefixProperty(font-feature-settings, "liga");
+}
+
+/* ==========================================================================
+   # Border Radius
+     Usage:
+     border-radius(3)
+     border-radius-separate(2px, 6px, 8px, 4px)
+   ========================================================================== */
+
+@mixin border-radius($radius...) {
+    @if (length($radius) > 1) {
+        $border-radius-values: ();
+        $border-radius-REMvalues: ();
+        $dontUseREM: false;
+
+        @for $value from 1 through length($radius) {
+            $nthValue: nth($radius, $value);
+
+            @if (unit($nthValue)=="%") {
+                @if ($nthValue==0%) or ($nthValue=="0%") {
+                    $border-radius-values: append($border-radius-values, 0);
+                }
+                @else {
+                    $border-radius-values: append($border-radius-values, $nthValue);
+                }
+            }
+                /* stylelint-disable */
+            @else if ($nthValue == 0px or $nthValue == 0rem) {
+                /* stylelint-enable */
+                $border-radius-values: append($border-radius-values, 0);
+                $border-radius-REMvalues: append($border-radius-REMvalues, 0);
+            }
+            @else if (unit($nthValue)=="px") {
+                $border-radius-values: append($border-radius-values, $nthValue);
+                $border-radius-REMvalues: append($border-radius-REMvalues, rem(stripunits($nthValue)));
+            }
+            @else if (validate($nthValue, number)) {
+                $border-radius-values: append($border-radius-values, stripunits($nthValue) + px);
+                $border-radius-REMvalues: append($border-radius-REMvalues, rem(stripunits($nthValue)));
+            }
+            @else {
+                @warn "border-radius: " + $value validate($nthValue, unit) + " Error with the rem conversion: unit measure is not valid!";
+            }
+        }
+
+        @include prefixProperty(border-radius, $border-radius-values);
+        @include prefixProperty(border-radius, $border-radius-REMvalues);
+        @include prefixProperty(background-clip, padding-box); // keeps background from busting out of border
+    }
+    @else if (length($radius)==1) {
+        $onlyOne: nth($radius, 1);
+        @if (unit($onlyOne)=="%") {
+            @include prefixProperty(border-radius, $onlyOne);
+            @include prefixProperty(background-clip, padding-box); // keeps background from busting out of border
+        }
+        @else if (unit($onlyOne)=="px") and not(unit($onlyOne)=="%") {
+            @include prefixProperty(border-radius, #{$onlyOne});
+            @include prefixProperty(border-radius, rem($onlyOne));
+            @include prefixProperty(background-clip, padding-box); // keeps background from busting out of border
+        }
+        @else if (validate($onlyOne, number)) {
+            @include prefixProperty(border-radius, #{$onlyOne}px);
+            @include prefixProperty(border-radius, rem($onlyOne));
+            @include prefixProperty(background-clip, padding-box); // keeps background from busting out of border
+        }
+        @else {
+            @warn "border-radius: " $onlyOne validate($onlyOne, unit) "Error with the rem conversion: unit measure is not valid!";
+        }
+    }
+    @else {
+        @warn "border-radius: Error with the rem conversion: no items to convert!";
+    }
+}
+
+@mixin border-radius-separate($top-left-radius:0, $top-right-radius:0, $bottom-right-radius:0, $bottom-left-radius:0) {
+    @include border-radius($top-left-radius, $top-right-radius, $bottom-right-radius, $bottom-left-radius);
+}
+
+@mixin border-top-left-radius($btlr) {
+    @if (unit($btlr) == "%") {
+        @include prefixProperty(border-top-left-radius, $btlr);
+    }
+    @else if(unit($btlr) == "px") and not(unit($btlr) == "%") {
+        @include prefixProperty(border-top-left-radius, #{$btlr});
+        @include prefixProperty(border-top-left-radius, rem($btlr));
+    }
+    @else if(validate($btlr, number)) {
+        @include prefixProperty(border-top-left-radius, #{$btlr}px);
+        @include prefixProperty(border-top-left-radius, rem($btlr));
+    }
+    @else {
+        @warn "border-top-left-radius:"$btlr validate($btlr, unit)"Error with the rem conversion: unit measure is not valid!";
+    }
+}
+
+@mixin border-top-radius($btr) {
+    @if (unit($btr) == "%") {
+        @include prefixProperty(border-top-left-radius, $btr);
+        @include prefixProperty(border-top-right-radius, $btr);
+    }
+    @else if(unit($btr) == "px") and not(unit($btr) == "%") {
+        @include prefixProperty(border-top-left-radius, #{$btr});
+        @include prefixProperty(border-top-right-radius, #{$btr});
+        @include prefixProperty(border-top-left-radius, rem($btr));
+        @include prefixProperty(border-top-right-radius, rem($btr));
+    }
+    @else if(validate($btr, number)) {
+        @include prefixProperty(border-top-left-radius, #{$btr}px);
+        @include prefixProperty(border-top-left-radius, rem($btr));
+        @include prefixProperty(border-top-right-radius, #{$btr}px);
+        @include prefixProperty(border-top-right-radius, rem($btr));
+    }
+    @else {
+        @warn "border-top-radius:"$btr validate($btr, unit)"Error with the rem conversion: unit measure is not valid!";
+    }
+}
+
+@mixin border-top-right-radius($btrr) {
+    @if (unit($btrr) == "%") {
+        @include prefixProperty(border-top-right-radius, $btrr);
+    }
+    @else if(unit($btrr) == "px") and not(unit($btrr) == "%") {
+        @include prefixProperty(border-top-right-radius, #{$btrr});
+        @include prefixProperty(border-top-right-radius, rem($btrr));
+    }
+    @else if(validate($btrr, number)) {
+        @include prefixProperty(border-top-right-radius, #{$btrr}px);
+        @include prefixProperty(border-top-right-radius, rem($btrr));
+    }
+    @else {
+        @warn "border-top-right-radius:"$btrr validate($btrr, unit)"Error with the rem conversion: unit measure is not valid!";
+    }
+}
+
+@mixin border-bottom-radius($bbr) {
+    @if (unit($bbr) == "%") {
+        @include prefixProperty(border-bottom-left-radius, $bbr);
+        @include prefixProperty(border-bottom-right-radius, $bbr);
+    }
+    @else if(unit($bbr) == "px") and not(unit($bbr) == "%") {
+        @include prefixProperty(border-bottom-left-radius, #{$bbr});
+        @include prefixProperty(border-bottom-left-radius, rem($bbr));
+        @include prefixProperty(border-bottom-right-radius, #{$bbr});
+        @include prefixProperty(border-bottom-right-radius, rem($bbr));
+    }
+    @else if(validate($bbr, number)) {
+        @include prefixProperty(border-bottom-left-radius, #{$bbr}px);
+        @include prefixProperty(border-bottom-left-radius, rem($bbr));
+        @include prefixProperty(border-bottom-right-radius, #{$bbr}px);
+        @include prefixProperty(border-bottom-right-radius, rem($bbr));
+    }
+    @else {
+        @warn "border-bottom-radius:"$bbr validate($bbr, unit)"Error with the rem conversion: unit measure is not valid!";
+    }
+}
+
+@mixin border-bottom-left-radius($bblr) {
+    @if (unit($bblr) == "%") {
+        @include prefixProperty(border-bottom-left-radius, $bblr);
+    }
+    @else if(unit($bblr) == "px") and not(unit($bblr) == "%") {
+        @include prefixProperty(border-bottom-left-radius, #{$bblr});
+        @include prefixProperty(border-bottom-left-radius, rem($bblr));
+    }
+    @else if(validate($bblr, number)) {
+        @include prefixProperty(border-bottom-left-radius, #{$bblr}px);
+        @include prefixProperty(border-bottom-left-radius, rem($bblr));
+    }
+    @else {
+        @warn "border-bottom-left-radius:"$bblr validate($bblr, unit)"Error with the rem conversion: unit measure is not valid!";
+    }
+}
+
+@mixin border-bottom-right-radius($bbrr) {
+    @if (unit($bbrr) == "%") {
+        @include prefixProperty(border-bottom-right-radius, $bbrr);
+    }
+    @else if(unit($bbrr) == "px") and not(unit($bbrr) == "%") {
+        @include prefixProperty(border-bottom-right-radius, #{$bbrr});
+        @include prefixProperty(border-bottom-right-radius, rem($bbrr));
+    }
+    @else if(validate($bbrr, number)) {
+        @include prefixProperty(border-bottom-right-radius, #{$bbrr}px);
+        @include prefixProperty(border-bottom-right-radius, rem($bbrr));
+    }
+    @else {
+        @warn "border-bottom-right-radius:"$bbrr validate($bbrr, unit)"Error with the rem conversion: unit measure is not valid!";
+    }
+}
+
+/* ==========================================================================
+   # Box Shadow
+     Usage: @include box-shadow(...)
+   ========================================================================== */
+
+@mixin box-shadow($args...) {
+    @include prefixProperty(box-shadow, #{$args});
+}
+
+/* ==========================================================================
+   # Text Shadow
+     Usage: @include text-shadow(...)
+   ========================================================================== */
+
+@mixin text-shadow($args...) {
+    @include prefixProperty(text-shadow, #{$args}, false, false, false, false);
+}
+
+/* ==========================================================================
+  # Keyframes animation
+    Usage:
+
+  @include keyframes(slide-down) {
+      0% { opacity: 1; }
+      90% { opacity: 0; }
+  }
+
+  .element {
+      width: 100px;
+      height: 100px;
+      background: black;
+      @include animation("slide-down 5s 3");
+  }
+   ========================================================================== */
+
+@mixin keyframes($animation-name) {
+    @-webkit-keyframes #{$animation-name} {
+        @content;
+    }
+
+    @-moz-keyframes #{$animation-name} {
+        @content;
+    }
+
+    @-ms-keyframes #{$animation-name} {
+        @content;
+    }
+
+    @-o-keyframes #{$animation-name} {
+        @content;
+    }
+
+    @keyframes #{$animation-name} {
+        @content;
+    }
+}
+
+@mixin perspective($argument) {
+    @include prefixProperty(perspective, $argument);
+}
+
+@mixin animation($arguments...) {
+    @include prefixProperty(animation, $arguments);
+}
+
+@mixin animation-delay($arguments) {
+    @include prefixProperty(animation-delay, $arguments);
+}
+
+@mixin animation-direction($arguments) {
+    @include prefixProperty(animation-direction, $arguments);
+}
+
+@mixin animation-iteration-count($arguments) {
+    @include prefixProperty(animation-iteration-count, $arguments);
+}
+
+/* ==========================================================================
+   # Material Animations
+     Usage:
+     @include material-animation-default();
+
+   ========================================================================== */
+
+@mixin material-animation-fast-out-slow-in($duration:0.2s) {
+    transition-timing-function: $animation-curve-fast-out-slow-in;
+    transition-duration: $duration;
+}
+
+@mixin material-animation-linear-out-slow-in($duration:0.2s) {
+    transition-timing-function: $animation-curve-linear-out-slow-in;
+    transition-duration: $duration;
+}
+
+@mixin material-animation-fast-out-linear-in($duration:0.2s) {
+    transition-timing-function: $animation-curve-fast-out-linear-in;
+    transition-duration: $duration;
+}
+
+@mixin material-animation-default($duration:0.2s) {
+    transition-timing-function: $animation-curve-default;
+    transition-duration: $duration;
+}
+
+/* ==========================================================================
+   # Gradients
+     Usage:
+     @include linear-gradient(...)
+     @include radial-gradient(...)
+
+   ========================================================================== */
+
+@mixin linear-gradient($args...) {
+    @include prefixValue(background-image, linear-gradient(#{$args}));
+}
+
+@mixin radial-gradient($args...) {
+    @include prefixValue(background-image, radial-gradient(#{$args}));
+}
+
+@mixin gradient-horizontal($start-color: #555, $end-color: #333, $start-percent: 0%, $end-percent: 100%) {
+    filter: progid:dximagetransform.microsoft.gradient(startColorstr="#{ie-hex-str($start-color)}", endColorstr="#{ie-hex-str($end-color)}", GradientType=1); // IE9 and down
+    background-repeat: repeat-x;
+    @include prefixValue(background-image, linear-gradient(to right, $start-color $start-percent, $end-color $end-percent));
+}
+
+@mixin gradient-vertical($start-color: #555, $end-color: #333, $start-percent: 0%, $end-percent: 100%) {
+    filter: progid:dximagetransform.microsoft.gradient(startColorstr="#{ie-hex-str($start-color)}", endColorstr="#{ie-hex-str($end-color)}", GradientType=0); // IE9 and down
+    background-repeat: repeat-x;
+    @include prefixValue(background-image, linear-gradient(to bottom, $start-color $start-percent, $end-color $end-percent));
+}
+
+@mixin gradient-directional($start-color: #555, $end-color: #333, $deg: 45deg) {
+    background-repeat: repeat-x;
+    @include prefixValue(background-image, linear-gradient($deg, $start-color, $end-color));
+}
+
+@mixin gradient-horizontal-three-colors($start-color: #00b3ee, $mid-color: #7a43b6, $color-stop: 50%, $end-color: #c3325f) {
+    filter: progid:dximagetransform.microsoft.gradient(startColorstr="#{ie-hex-str($start-color)}", endColorstr="#{ie-hex-str($end-color)}", GradientType=1); // IE9 and down, gets no color-stop at all for proper fallback
+    background-repeat: no-repeat;
+    @include prefixValue(background-image, linear-gradient(to left, $start-color, $mid-color $color-stop, $end-color));
+}
+
+@mixin gradient-vertical-three-colors($start-color: #00b3ee, $mid-color: #7a43b6, $color-stop: 50%, $end-color: #c3325f) {
+    filter: progid:dximagetransform.microsoft.gradient(startColorstr="#{ie-hex-str($start-color)}", endColorstr="#{ie-hex-str($end-color)}", GradientType=0); // IE9 and down, gets no color-stop at all for proper fallback
+    background-repeat: no-repeat;
+    @include prefixValue(background-image, linear-gradient($start-color, $mid-color $color-stop, $end-color));
+}
+
+@mixin gradient-radial($inner-color: #555, $outer-color: #333) {
+    background-repeat: no-repeat;
+    @include prefixValue(background-image, radial-gradient(circle, $inner-color, $outer-color));
+}
+
+@mixin gradient-striped($color: rgba(255,255,255,0.15), $angle: 45deg) {
+    @include prefixValue(background-image, linear-gradient($angle, $color 25%, transparent 25%, transparent 50%, $color 50%, $color 75%, transparent 75%, transparent));
+}
+
+//http://tympanus.net/codrops/css_reference/repeating-radial-gradient/
+@mixin repeating-radial-gradient($args...) {
+    @include prefixValue(background-image, repeating-radial-gradient(#{$args}));
+}
+
+/* ==========================================================================
+   # Transforms
+     Usage:
+     @include transform(...)                 # generic transform
+     @include rotate(...)                    #
+     @include scale(...)
+     @include translate(...)
+     @include skew(...)
+     @include transform-origin(...)
+   ========================================================================== */
+
+@mixin transform($transforms...) {
+    @include prefixProperty(transform, $transforms);
+}
+
+@mixin rotate($deg) {
+    @include transform(rotate(#{$deg}deg));
+}
+
+@mixin scale($scale) {
+    @include transform(scale($scale));
+}
+
+@mixin translate($x: 0, $y: 0) {
+    @debug $y $x;
+    @if (is-unit($x) AND $y==0) {
+        @include transform(translate($x, 0));
+    }
+    @else if (is-unit($y) AND $x==0) {
+        @include transform(translate(0, $y));
+    }
+    @else if (is-unit($x) AND is-unit($y)) {
+        @include transform(translate($x, $y));
+    }
+    @else if (is-int($x) AND is-int($y)) {
+        @include transform(translate(#{$x}px, #{$y}px));
+    }
+}
+
+@mixin translate3d($x: 0, $y: 0, $z: 0) {
+
+    @if (is-unit($x) AND $y==0 AND $z==0) {
+        @include transform(translate($x, 0));
+    }
+    @else if (is-unit($x) AND is-unit($y) AND $x==0) {
+        @include transform(translate3d($x, $y, 0));
+    }
+    @else if (is-unit($x) AND $y==0 AND is-unit($z)) {
+        @include transform(translate3d($x, 0, $z));
+    }
+    @else if ($x==0 AND is-unit($y) AND $z==0) {
+        @include transform(translate3d(0, $y, 0));
+    }
+    @else if ($x==0 AND is-unit($y) AND is-unit($z)) {
+        @include transform(translate3d(0, $y, $z));
+    }
+    @else if ($x==0 AND $y==0 AND is-unit($z)) {
+        @include transform(translate3d(0, 0, $z));
+    }
+    @else if (is-unit($x) AND is-unit($y) AND is-unit($z)) {
+        @include transform(translate3d($x, $y, $z));
+    }
+    @else if (is-int($x) AND $y==0 AND $z==0) {
+        @include transform(translate3d(#{$x}px, 0, 0));
+    }
+    @else if (is-int($x) AND is-int($y) AND $z==0) {
+        @include transform(translate3d(#{$x}px, #{$y}px, 0));
+    }
+    @else if (is-int($x) AND $y==0 AND is-int($z)) {
+        @include transform(translate3d(#{$x}px, 0, #{$z}px));
+    }
+    @else if ($x==0 AND is-int($y) AND $z==0) {
+        @include transform(translate3d(0, #{$y}px, 0));
+    }
+    @else if ($x==0 AND is-int($y) AND is-int($z)) {
+        @include transform(translate3d(0, #{$y}px, #{$z}px));
+    }
+    @else if ($x==0 AND $y==0  AND is-int($z)) {
+        @include transform(translate3d(0, 0, #{$z}px));
+    }
+    @else if (is-int($x) AND is-int($y) AND is-int($z)) {
+        @include transform(translate3d(#{$x}px, #{$y}px, #{$z}px));
+    }
+}
+
+@mixin skew($x: 0, $y: 0) {
+    @include transform(skew(#{$x}deg, #{$y}deg));
+}
+
+@mixin transform-origin($origin) {
+    @include prefixProperty(transform-origin, $origin);
+}
+
+/* ==========================================================================
+   # Forces browsers to use hardware acceleration for transforms
+     Usage:
+     @include ha;
+   ========================================================================== */
+
+@mixin ha($x:0, $y:0, $z:0) {
+    @include translate3d($x, $y, $z);
+}
+
+/* ==========================================================================
+   # Center block elements
+     Horizontally and vertically centers block elements
+     Usage:
+     @include center-both();
+   ========================================================================== */
+
+@mixin center-both() {
+    top: 50%;
+    left: 50%;
+    @include prefixProperty(transform, translate(-50%, -50%));
+}
+
+@mixin center-x() {
+    left: 50%;
+    @include prefixProperty(transform, translate(-50%, 0%));
+}
+
+@mixin center-y() {
+    top: 50%;
+    @include prefixProperty(transform, translate(0%, -50%));
+}
+
+/* ==========================================================================
+   # Transition
+     Usage:
+        a {
+			color: gray;
+		    @include transition(color .3s ease);
+		}
+   ========================================================================== */
+
+@mixin transition($args...) {
+    @include prefixProperty(transition, #{$args});
+}
+
+@mixin transition-property($args...) {
+    @include prefixProperty(transition-property, #{$args});
+}
+
+@mixin transition-duration($duration...) {
+    @include prefixProperty(transition-duration, #{$duration});
+}
+
+@mixin transition-timing-function($timing...) {
+    @include prefixProperty(transition-timing-function, #{$timing});
+}
+
+@mixin transition-delay($delay...) {
+    @include prefixProperty(transition-delay, #{$delay});
+}
+
+/* ==========================================================================
+   # Easing http://cubic-bezier.com/
+     Usage:
+     @include transition(top 500ms $easeInOutCubic);             # Cubic
+     @include transition(top 500ms $easeInOut);                  # Circ
+     @include transition(top 500ms $easeInOutExpo);              # Expo
+     @include transition(top 500ms $easeInOutQuad);              # Quad
+     @include transition(top 500ms $easeInOutQuart);             # Quart
+     @include transition(top 500ms $easeInOutQuint);             # Quint
+     @include transition(top 500ms $easeInOutSine);              # Sine
+     @include transition(top 500ms $easeInOutBack);              # Back
+     @include transition(top 500ms $easeInOutFast);              # Ease tFast
+     @include transition(top 500ms $authenticMotion);            # Authentic Motion
+   ========================================================================== */
+
+$easeInCubic: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+$easeOutCubic: cubic-bezier(0.215, 0.61, 0.355, 1);
+$easeInOutCubic: cubic-bezier(0.645, 0.045, 0.355, 1);
+
+$easeInCirc: cubic-bezier(0.6, 0.04, 0.98, 0.335);
+$easeOutCirc: cubic-bezier(0.075, 0.82, 0.165, 1);
+$easeInOutCirc: cubic-bezier(0.785, 0.135, 0.15, 0.86);
+
+$easeInExpo: cubic-bezier(0.95, 0.05, 0.795, 0.035);
+$easeOutExpo: cubic-bezier(0.19, 1, 0.22, 1);
+$easeInOutExpo: cubic-bezier(1, 0, 0, 1);
+
+$easeInQuad: cubic-bezier(0.55, 0.085, 0.68, 0.53);
+$easeOutQuad: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+$easeInOutQuad: cubic-bezier(0.455, 0.03, 0.515, 0.955);
+
+$easeInQuart: cubic-bezier(0.895, 0.03, 0.685, 0.22);
+$easeOutQuart: cubic-bezier(0.165, 0.84, 0.44, 1);
+$easeInOutQuart: cubic-bezier(0.77, 0, 0.175, 1);
+
+$easeInQuint: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+$easeOutQuint: cubic-bezier(0.23, 1, 0.32, 1);
+$easeInOutQuint: cubic-bezier(0.86, 0, 0.07, 1);
+
+$easeInSine: cubic-bezier(0.47, 0, 0.745, 0.715);
+$easeOutSine: cubic-bezier(0.39, 0.575, 0.565, 1);
+$easeInOutSine: cubic-bezier(0.445, 0.05, 0.55, 0.95);
+
+$easeInBack: cubic-bezier(0.6, -0.28, 0.735, 0.045);
+$easeOutBack: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+$easeInOutBack: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+$easeInOutFast: cubic-bezier(1, 0, 0, 1);
+
+$authenticMotion: cubic-bezier(0.4, 0, 0.2, 1);
+
+/* ==========================================================================
+   #
+   ========================================================================== */
+
+@mixin line-clamp($lines: 2, $line-height: false) {
+    display: -webkit-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -webkit-line-clamp: $lines;
+    -webkit-box-orient: vertical;
+
+    // Fallback for non-Webkit browsers
+    // (won"t show `…` at the end of the block)
+    @if $line-height {
+        max-height: $line-height * $lines * 1px;
+    }
+}
+
+/* ==========================================================================
+   # Flexbox Containers
+     info:
+      	 The "flex" value causes an element to generate a block-level flex
+		 container box.
+		 The "inline-flex" value causes an element to generate a inline-level
+		 flex container box.
+	 usage:
+	 @extend %flexbox
+	 @extend %inline-flex
+   ========================================================================== */
+
+// $flex-direction - Row or Column.
+// $flex-wrap
+// $justify-content:
+// $align-content:
+// $align-items:
+//
+// Compatible in
+@mixin flexy ($flex-direction: null, $flex-wrap: null, $justify-content: null, $align-content: null, $align-items: null) {
+    /* stylelint-disable */
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: -webkit-box;
+    display: flex;
+
+    @if ($flex-direction != null) {
+        @include flex-direction(#{$flex-direction});
+    }
+    @if ($flex-wrap != null) {
+        @include flex-wrap(#{$flex-wrap});
+    }
+    @if ($justify-content != null) {
+        @include justify-content(#{$justify-content});
+    }
+    @if ($align-content != null) {
+        @include align-content(#{$align-content});
+    }
+    @if ($align-items != null) {
+        @include align-items(#{$align-items});
+    }
+}
+
+@mixin flexbox {
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: -webkit-box;
+    display: flex;
+}
+
+@mixin inline-flex {
+    display: -webkit-inline-flex;
+    display: -moz-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+}
+
+/* ==========================================================================
+   # Flexbox Direction
+     info:
+      	 The "flex-direction" property specifies how flex items are placed in
+		 the flex container, by setting the direction of the flex container"s
+		 main axis. This determines the direction that flex items are laid out in.
+	 usage:
+	 @include flex-direction(row|row-reverse|column|column-reverse|initial|inherit)
+	 @include flex-dir(row|row-reverse|column|column-reverse|initial|inherit)           # Shorter version
+   ========================================================================== */
+
+@mixin flex-direction($value: row) {
+    @if $value == row-reverse {
+        -webkit-box-direction: reverse;
+        -webkit-box-orient: horizontal;
+    }
+    @else if $value == column {
+        -webkit-box-direction: normal;
+        -webkit-box-orient: vertical;
+    }
+    @else if $value == column-reverse {
+        -webkit-box-direction: reverse;
+        -webkit-box-orient: vertical;
+    }
+    @else {
+        -webkit-box-direction: normal;
+        -webkit-box-orient: horizontal;
+    }
+
+    -moz-flex-direction: $value;
+    -ms-flex-direction: $value;
+    -webkit-flex-direction: $value;
+    flex-direction: $value;
+}
+
+@mixin flex-dir($args...) {
+    @include flex-direction($args...);
+}
+
+/* ==========================================================================
+   # Flexbox Wrap
+     info:
+		 The "flex-wrap" property controls whether the flex container is single-line
+		 or multi-line, and the direction of the cross-axis, which determines
+		 the direction new lines are stacked in.
+	 usage:
+	 @include flex-wrap(nowrap | wrap | wrap-reverse)
+   ========================================================================== */
+
+@mixin flex-wrap($value: nowrap) {
+    // No Webkit Box fallback.
+    -moz-flex-wrap: wrap;
+    -webkit-flex-wrap: $value;
+
+    @if $value == nowrap {
+        /* stylelint-disable */
+        -ms-flex-wrap: none;
+        /* stylelint-enable */
+    }
+    @else {
+        -ms-flex-wrap: $value;
+    }
+
+    flex-wrap: $value;
+}
+
+/* ==========================================================================
+   # Flexbox Flow
+     info:
+		 The "flex-flow" property is a shorthand for setting the "flex-direction"
+		 and "flex-wrap" properties, which together define the flex container"s
+		 main and cross axes.
+	 usage:
+	 @include flex-flow(flex-direction | flex-wrap)
+   ========================================================================== */
+
+@mixin flex-flow($values: (row nowrap)) {
+    @include prefixProperty(flex-flow, $values);
+}
+
+/* ==========================================================================
+   # Flexbox Order
+     info:
+		  The "order" property controls the order in which flex items appear within
+ 		  their flex container, by assigning them to ordinal groups.
+	 usage:
+	 @include flex-order(1)
+   ========================================================================== */
+
+@mixin flex-order($int: 0) {
+    -webkit-box-ordinal-group: $int + 1;
+    @include prefixProperty(order, $int);
+}
+
+@mixin order($int: 0) {
+    @include flex-order($int);
+}
+
+/* ==========================================================================
+   # Flexbox Grow
+     info:
+		 The "flex-grow" property sets the flex grow factor. Negative numbers
+		 are invalid.
+	 usage:
+	 @include flex-grow(1)
+   ========================================================================== */
+
+@mixin flex-grow($int: 0) {
+    -webkit-box-flex: $int;
+    -ms-flex-positive: $int;
+    @include prefixProperty(flex-grow, $int);
+}
+
+/* ==========================================================================
+   # Flexbox Shrink
+	  info:
+		 The "flex-shrink" property sets the flex shrink factor. Negative numbers
+		 are invalid.
+	 usage:
+	 @include flex-shrink(1)
+   ========================================================================== */
+
+@mixin flex-shrink($int: 1) {
+    -ms-flex-negative: $int;
+    @include prefixProperty(flex-shrink, $int);
+}
+
+/* ==========================================================================
+   # Flexbox Basis
+     info:
+		 The "flex-basis" property sets the flex basis. Negative lengths are invalid.
+	 usage:
+	 @include flex-basis(auto)
+   ========================================================================== */
+
+@mixin flex-basis($value: auto) {
+    @include prefixProperty(flex-basis, $value);
+
+    -ms-flex-preferred-size: $value;
+}
+
+/* ==========================================================================
+   # Flexbox "Flex" (shorthand)
+     info:
+		 The "flex" property specifies the modules of a flexible length: the
+		 flex grow factor and flex shrink factor, and the flex basis. When an
+		 element is a flex item, "flex" is consulted instead of the main size
+		 property to determine the main size of the element. If an element is
+		 not a flex item, "flex" has no effect.
+	 usage:
+	 @include flex( none | flex-grow | flex-shrink | flex-basis)
+   ========================================================================== */
+
+@mixin flex($fg: 1, $fs: null, $fb: null) {
+    // Set a variable to be used by box-flex properties
+    $fg-boxflex: $fg;
+
+    // Box-Flex only supports a flex-grow value so let"s grab the
+    // first item in the list and just return that.
+    @if type-of($fg) == "list" {
+        $fg-boxflex: nth($fg, 1);
+    }
+
+    -moz-box-flex: $fg-boxflex;
+    -webkit-box-flex: $fg-boxflex;
+    @include prefixProperty(flex, $fg $fs $fb);
+}
+
+/* ==========================================================================
+   # Flexbox Justify Content
+     info:
+		 The "justify-content" property aligns flex items along the main axis
+		 of the current line of the flex container. This is done after any flexible
+		 lengths and any auto margins have been resolved. Typically it helps distribute
+		 extra free space leftover when either all the flex items on a line are
+		 inflexible, or are flexible but have reached their maximum size. It also
+		 exerts some control over the alignment of items when they overflow the line.
+
+		 Note: "space-*" values not supported in older syntaxes.
+
+	 usage:
+	 @include justify-content(flex-start | flex-end | center | space-between | space-around)
+   ========================================================================== */
+
+@mixin justify-content($value: flex-start) {
+    @if $value == flex-start {
+        -webkit-box-pack: start;
+        -ms-flex-pack: start;
+    }
+    @else if $value == flex-end {
+        -webkit-box-pack: end;
+        -ms-flex-pack: end;
+    }
+    @else if $value == space-between {
+        -webkit-box-pack: justify;
+        -ms-flex-pack: justify;
+    }
+    @else if $value == space-around {
+        /* stylelint-disable */
+        -ms-flex-pack: distribute;
+        /* stylelint-enable */
+    }
+    @else {
+        -webkit-box-pack: $value;
+        -ms-flex-pack: $value;
+    }
+
+    //-webkit-justify-content: $value;
+    //-moz-justify-content: $value;
+    //justify-content: $value;
+    @include prefixProperty(justify-content, $value);
+}
+
+// Shorter version:
+@mixin flex-just($args...) {
+    @include justify-content($args...);
+}
+
+/* ==========================================================================
+   # Flexbox Align Items
+     info:
+		 Flex items can be aligned in the cross axis of the current line of the
+		 flex container, similar to "justify-content" but in the perpendicular
+		 direction. "align-items" sets the default alignment for all of the flex
+		 container"s items, including anonymous flex items. "align-self" allows
+		 this default alignment to be overridden for individual flex items. (For
+		 anonymous flex items, "align-self" always matches the value of "align-items"
+		 on their associated flex container.)
+
+	 usage:
+	 @include align-items(flex-start | flex-end | center | baseline | stretch)
+   ========================================================================== */
+
+@mixin align-items($value: stretch) {
+    @if $value == flex-start {
+        -webkit-box-align: start;
+        -ms-flex-align: start;
+    }
+    @else if $value == flex-end {
+        -webkit-box-align: end;
+        -ms-flex-align: end;
+    }
+    @else {
+        -webkit-box-align: $value;
+        -ms-flex-align: $value;
+    }
+
+    //-webkit-align-items: $value;
+    //-moz-align-items: $value;
+    //align-items: $value;
+    @include prefixProperty(align-items, $value);
+}
+
+/* ==========================================================================
+   # Flexbox Align Self
+     info:
+		 Center the alignments for all the items of the flexible <div> element:
+	 usage:
+	 @include align-self(auto | flex-start | flex-end | center | baseline | stretch)
+   ========================================================================== */
+
+@mixin align-self($value: auto) {
+    // No Webkit Box Fallback.
+    //-webkit-align-self: $value;
+    //-moz-align-self: $value;
+
+    @if $value == flex-start {
+        -ms-flex-item-align: start;
+    }
+    @else if $value == flex-end {
+        -ms-flex-item-align: end;
+    }
+    @else {
+        -ms-flex-item-align: $value;
+    }
+
+    //align-self: $value;
+    @include prefixProperty(align-self, $value);
+}
+
+/* ==========================================================================
+   # Flexbox Align Content
+     info:
+		 The "align-content" property aligns a flex container"s lines within the
+		 flex container when there is extra space in the cross-axis, similar to
+		 how "justify-content" aligns individual items within the main-axis. Note,
+		 this property has no effect when the flexbox has only a single line.
+	 usage:
+	 @include align-content(flex-start | flex-end | center | space-between | space-around | stretch)
+   ========================================================================== */
+
+@mixin align-content($value: stretch) {
+    // No Webkit Box Fallback.
+    //-webkit-align-content: $value;
+    //-moz-align-content: $value;
+
+    @if $value == flex-start {
+        -ms-flex-line-pack: start;
+    }
+    @else if $value == flex-end {
+        -ms-flex-line-pack: end;
+    }
+    @else {
+        -ms-flex-line-pack: $value;
+    }
+
+    //align-content: $value;
+    @include prefixProperty(align-content, $value);
+}
+
+/* ==========================================================================
+   # column-count
+    Divide the text in the <div> element into three columns:
+	 usage:
+	 @include column-count(auto);
+   ========================================================================== */
+
+@mixin column-count($value: 1) {
+    @include prefixProperty(column-count, $value);
+}
+
+/* ==========================================================================
+   # Clearfix
+	 usage:
+	 @include clearfix
+   ========================================================================== */
+
+@mixin clearfix() {
+    & {
+        *zoom: 1;
+    }
+
+    &:before,
+    &:after {
+        display: table;
+        content: "";
+    }
+
+    &:after {
+        clear: both;
+    }
+}
+
+
+/* ==========================================================================
+   # Material Design Custom Shadow
+	 usage:
+	 @include customShadow(1)
+   ========================================================================== */
+
+$level: 1;
+
+@mixin customShadow($level) {
+    @include transition(box-shadow 0.3s ease-in-out);
+
+    @if $level == 1 {
+        @include box-shadow(0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24));
+    }
+    @else if $level == 2 {
+        @include box-shadow(0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23));
+    }
+    @else if $level == 3 {
+        @include box-shadow(0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23));
+    }
+    @else if $level == 4 {
+        @include box-shadow(0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22));
+    }
+    @else if $level == 5 {
+        @include box-shadow(0 19px 38px rgba(0, 0, 0, 0.3), 0 15px 12px rgba(0, 0, 0, 0.22));
+    }
+}
+
+/* ==========================================================================
+   # Material Shadow
+	 usage:
+	 @include focus-shadow()
+   ========================================================================== */
+
+@mixin focus-shadow() {
+    @include box-shadow(0 0 8px rgba(0, 0, 0, 0.18), 0 8px 16px rgba(0, 0, 0, 0.36));
+}
+
+@mixin shadow-1dp() {
+    @include box-shadow(0 1px 3px 0 rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0 1px 2px 0 rgba(0, 0, 0, $shadow-key-umbra-opacity), 0 1px 2px 0 rgba(0, 0, 0, $shadow-ambient-shadow-opacity));
+}
+
+@mixin shadow-2dp() {
+    @include box-shadow(0 2px 2px 0 rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0 3px 1px -2px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0 1px 5px 0 rgba(0, 0, 0, $shadow-ambient-shadow-opacity));
+}
+
+@mixin shadow-3dp() {
+    @include box-shadow(0 3px 4px 0 rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0 3px 3px -2px rgba(0, 0, 0, $shadow-key-umbra-opacity), 0 1px 8px 0 rgba(0, 0, 0, $shadow-ambient-shadow-opacity));
+}
+
+@mixin shadow-4dp() {
+    @include box-shadow(0 4px 5px 0 rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0 1px 10px 0 rgba(0, 0, 0, $shadow-ambient-shadow-opacity), 0 2px 4px -1px rgba(0, 0, 0, $shadow-key-umbra-opacity));
+}
+
+@mixin shadow-6dp() {
+    @include box-shadow(0 6px 10px 0 rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0 1px 18px 0 rgba(0, 0, 0, $shadow-ambient-shadow-opacity), 0 3px 5px -1px rgba(0, 0, 0, $shadow-key-umbra-opacity));
+}
+
+@mixin shadow-8dp() {
+    @include box-shadow(0 8px 10px 1px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0 3px 14px 2px rgba(0, 0, 0, $shadow-ambient-shadow-opacity), 0 5px 5px -3px rgba(0, 0, 0, $shadow-key-umbra-opacity));
+}
+
+@mixin shadow-16dp() {
+    @include box-shadow(0 16px 24px 2px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0 6px 30px 5px rgba(0, 0, 0, $shadow-ambient-shadow-opacity), 0 8px 10px -5px rgba(0, 0, 0, $shadow-key-umbra-opacity));
+}
+
+@mixin shadow-24dp() {
+    @include box-shadow(0 9px 46px 8px rgba(0, 0, 0, $shadow-key-penumbra-opacity), 0 11px 15px -7px rgba(0, 0, 0, $shadow-ambient-shadow-opacity), 0 24px 38px 3px rgba(0, 0, 0, $shadow-key-umbra-opacity));
+}
+
+/* ==========================================================================
+   # Responsive Typography of Elements
+	 usage:
+	 @include responsiveH1();
+   ========================================================================== */
+
+@mixin responsive-typography-btn() {
+    @include breakpoint ($xs) {
+        padding: get-responsive-font($primary-button-sizes, xs, padding);
+        font-size: get-responsive-font($primary-button-sizes, xs, size);
+        line-height: get-responsive-font($primary-button-sizes, xs, height);
+    }
+
+    @include breakpoint ($sm) {
+        padding: get-responsive-font($primary-button-sizes, sm, padding);
+        font-size: get-responsive-font($primary-button-sizes, sm, size);
+        line-height: get-responsive-font($primary-button-sizes, sm, height);
+    }
+
+    @include breakpoint ($md) {
+        padding: get-responsive-font($primary-button-sizes, md, padding);
+        font-size: get-responsive-font($primary-button-sizes, md, size);
+        line-height: get-responsive-font($primary-button-sizes, md, height);
+    }
+
+    @include breakpoint ($lg) {
+        padding: get-responsive-font($primary-button-sizes, lg, padding);
+        font-size: get-responsive-font($primary-button-sizes, lg, size);
+        line-height: get-responsive-font($primary-button-sizes, lg, height);
+    }
+
+    @include breakpoint ($xl) {
+        padding: get-responsive-font($primary-button-sizes, xl, padding);
+        font-size: get-responsive-font($primary-button-sizes, xl, size);
+        line-height: get-responsive-font($primary-button-sizes, xl, height);
+    }
+
+    @include breakpoint ($xxl) {
+        padding: get-responsive-font($primary-button-sizes, xxl, padding);
+        font-size: get-responsive-font($primary-button-sizes, xxl, size);
+        line-height: get-responsive-font($primary-button-sizes, xxl, height);
+    }
+}
+
+/* ==========================================================================
+   # Responsive Typography of Elements
+	 usage:
+	 @include responsiveH1();
+   ========================================================================== */
+
+@mixin responsive-title() {
+    font-weight: $primary-title-font-weight;
+
+    @include breakpoint ($xs) {
+        font-size: get-responsive-font($primary-title-font-size, xs, size);
+        line-height: get-responsive-font($primary-title-font-size, xs, height);
+    }
+
+    @include breakpoint ($sm) {
+        font-size: get-responsive-font($primary-title-font-size, sm, size);
+        line-height: get-responsive-font($primary-title-font-size, sm, height);
+    }
+
+    @include breakpoint ($md) {
+        font-size: get-responsive-font($primary-title-font-size, md, size);
+        line-height: get-responsive-font($primary-title-font-size, md, height);
+    }
+
+    @include breakpoint ($lg) {
+        font-size: get-responsive-font($primary-title-font-size, lg, size);
+        line-height: get-responsive-font($primary-title-font-size, lg, height);
+    }
+
+    @include breakpoint ($xl) {
+        font-size: get-responsive-font($primary-title-font-size, xl, size);
+        line-height: get-responsive-font($primary-title-font-size, xl, height);
+    }
+    @include breakpoint ($xxl) {
+        font-size: get-responsive-font($primary-title-font-size, xxl, size);
+        line-height: get-responsive-font($primary-title-font-size, xxl, height);
+    }
+}
+
+@mixin responsive-sub-title() {
+    font-weight: $primary-sub-title-font-weight;
+
+    @include breakpoint ($xs) {
+        font-size: get-responsive-font($primary-sub-title-font-size, xs, size);
+        line-height: get-responsive-font($primary-sub-title-font-size, xs, height);
+    }
+
+    @include breakpoint ($sm) {
+        font-size: get-responsive-font($primary-sub-title-font-size, sm, size);
+        line-height: get-responsive-font($primary-sub-title-font-size, sm, height);
+    }
+
+    @include breakpoint ($md) {
+        font-size: get-responsive-font($primary-sub-title-font-size, md, size);
+        line-height: get-responsive-font($primary-sub-title-font-size, md, height);
+    }
+
+    @include breakpoint ($lg) {
+        font-size: get-responsive-font($primary-sub-title-font-size, lg, size);
+        line-height: get-responsive-font($primary-sub-title-font-size, lg, height);
+    }
+
+    @include breakpoint ($xl) {
+        font-size: get-responsive-font($primary-sub-title-font-size, xl, size);
+        line-height: get-responsive-font($primary-sub-title-font-size, xl, height);
+    }
+
+    @include breakpoint ($xxl) {
+        font-size: get-responsive-font($primary-sub-title-font-size, xxl, size);
+        line-height: get-responsive-font($primary-sub-title-font-size, xxl, height);
+    }
+}
+
+@mixin responsive-body-text() {
+    font-weight: $primary-text-font-weight;
+
+    @include breakpoint ($xs) {
+        font-size: get-responsive-font($primary-text-font-size, xs, size);
+        line-height: get-responsive-font($primary-text-font-size, xs, height);
+    }
+
+    @include breakpoint ($sm) {
+        font-size: get-responsive-font($primary-text-font-size, sm, size);
+        line-height: get-responsive-font($primary-text-font-size, sm, height);
+    }
+
+    @include breakpoint ($md) {
+        font-size: get-responsive-font($primary-text-font-size, md, size);
+        line-height: get-responsive-font($primary-text-font-size, md, height);
+    }
+
+    @include breakpoint ($lg) {
+        font-size: get-responsive-font($primary-text-font-size, lg, size);
+        line-height: get-responsive-font($primary-text-font-size, lg, height);
+    }
+
+    @include breakpoint ($xl) {
+        font-size: get-responsive-font($primary-text-font-size, xl, size);
+        line-height: get-responsive-font($primary-text-font-size, xl, height);
+    }
+
+    @include breakpoint ($xxl) {
+        font-size: get-responsive-font($primary-text-font-size, xxl, size);
+        line-height: get-responsive-font($primary-text-font-size, xxl, height);
+    }
+}
+
+@mixin responsive-cards-name() {
+    font-family: $primary-font-family;
+    font-weight: $card-title-font-weight;
+
+    @include breakpoint ($xs) {
+        font-size: get-responsive-font($card-name-sizes, xs, size);
+        line-height: get-responsive-font($card-name-sizes, xs, height);
+    }
+
+    @include breakpoint ($sm) {
+        font-size: get-responsive-font($card-name-sizes, sm, size);
+        line-height: get-responsive-font($card-name-sizes, sm, height);
+    }
+
+    @include breakpoint ($md) {
+        font-size: get-responsive-font($card-name-sizes, md, size);
+        line-height: get-responsive-font($card-name-sizes, md, height);
+    }
+
+    @include breakpoint ($lg) {
+        font-size: get-responsive-font($card-name-sizes, lg, size);
+        line-height: get-responsive-font($card-name-sizes, lg, height);
+    }
+
+    @include breakpoint ($xl) {
+        font-size: get-responsive-font($card-name-sizes, xl, size);
+        line-height: get-responsive-font($card-name-sizes, xl, height);
+    }
+
+    @include breakpoint ($xxl) {
+        font-size: get-responsive-font($card-name-sizes, xxl, size);
+        line-height: get-responsive-font($card-name-sizes, xxl, height);
+    }
+}
+
+/* ==========================================================================
+   # Buttons
+	 usage:
+	 @include btn();
+   ========================================================================== */
+
+@mixin btn-default($color, $bg-color, $hover-color, $hover-bg-color) {
+    min-width: $primary-button-min-width;
+    font-family: $primary-button-font-family;
+    font-size: 180%;
+    font-weight: $primary-button-font-weight;
+    color: $color;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: inherit;
+    cursor: pointer;
+    background-color: $bg-color;
+    border: none;
+    @include border-radius($primary-button-border-radius);
+    @extend .ripple-effect;
+    @include shadow-2dp;
+    @include responsive-typography-btn;
+    @include transition(all 0.15s ease-in-out);
+
+    &:focus,
+    &:active,
+    &.active,
+    &:active:focus,
+    &.active:focus {
+        text-decoration: none;
+        outline: 0;
+        outline-offset: 0;
+    }
+
+    &:focus,
+    &:hover {
+        text-decoration: none;
+        outline: none;
+        @include shadow-16dp();
+    }
+
+    &:hover {
+        color: $hover-color;
+        background-color: $hover-bg-color;
+    }
+
+    &:focus {
+        color: inherit;
+    }
+}
+
+/* ==========================================================================
+   # Trucane
+	 usage:
+	 @include trucane();
+   ========================================================================== */
+
+@mixin trucane() {
+    overflow: hidden;
+    white-space: nowrap;
+    @include prefixProperty(text-overflow, ellipsis);
+}
+
+@mixin ellipsis() {
+    @include trucane();
+}
+
+@mixin font-size($size) {
+    @if (validate($size, measure)) { //pixel fallback
+        font-size: #{$size};
+    }
+    @else if (validate($size, number)) {
+        font-size: #{$size}px;
+    }
+    @else {
+        @warn "Invalid font-size Unit!";
+    }
+
+    font-size: rem($size);
+}
+
+//FIXME: fix -webkit-line-clamp: $lines-to-show; -webkit-box-orient: vertical;
+@mixin ellipsis-multiline($font-size, $line-height, $lines-to-show) {
+    display: block;
+    // Fallback for non-webkit
+    display: -webkit-box;
+    max-height: $font-size*$line-height*$lines-to-show;
+    overflow: hidden;
+    // Fallback for non-webkit
+    font-size: $font-size;
+    line-height: $line-height;
+    -webkit-line-clamp: $lines-to-show;
+    -webkit-box-orient: vertical;
+    text-overflow: ellipsis;
+}
+
+@mixin ellipsis-multiline-simple($height, $lines-to-show) {
+    display: block;
+    // Fallback for non-webkit
+    display: -webkit-box;
+    max-height: $height;
+    // Fallback for non-webkit
+    -webkit-line-clamp: $lines-to-show;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@mixin ellipsis-lines($lines-to-show) {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: $lines-to-show;
+    -webkit-box-orient: vertical;
+    text-overflow: ellipsis;
+}
+
+@mixin reset-link {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover,
+    &:focus,
+    &:active {
+        color: inherit;
+        text-decoration: none;
+        outline: none;
+    }
+}
+
+@mixin reset-text {
+    font-family: $font-family-base;
+    // We deliberately do NOT reset font-size.
+    font-style: normal;
+    font-weight: normal;
+    line-height: normal;
+    text-align: left; // Fallback for where `start` is not supported
+    text-align: start;
+    text-decoration: none;
+    text-transform: none;
+    letter-spacing: normal;
+    line-break: auto;
+    word-break: normal;
+    word-spacing: normal;
+    word-wrap: normal;
+    white-space: normal;
+    @include text-shadow(none);
+}
+
+@mixin touch-scroll {
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+}
+
+/// poly-fluid-sizing
+/// Generate linear interpolated size values through multiple break points
+/// @param $property - A string CSS property name
+/// @param $map - A SASS map of viewport unit and size value pairs
+/// @requires function linear-interpolation
+/// @requires function map-sort
+/// @example
+///   @include poly-fluid-sizing('font-size', (576px: 22px, 768px: 24px, 992px: 34px));
+/// @author Jake Wilson <jake.e.wilson@gmail.com>
+@mixin poly-fluid-sizing($property, $map) {
+    // Get the number of provided breakpoints
+    $length: length(map-keys($map));
+
+    // Error if the number of breakpoints is < 2
+    @if ($length < 2) {
+        @error "poly-fluid-sizing() $map requires at least values";
+    }
+
+    // Sort the map by viewport width (key)
+    $map: map-sort($map);
+    $keys: map-keys($map);
+
+    // Minimum size
+    #{$property}: map-get($map, nth($keys, 1));
+
+    // Interpolated size through breakpoints
+    @for $i from 1 through ($length - 1) {
+        @media (min-width: nth($keys, $i)) {
+            #{$property}: linear-interpolation((nth($keys, $i): map-get($map, nth($keys, $i)), nth($keys, ($i+1)): map-get($map, nth($keys, ($i + 1)))));
+        }
+    }
+
+    // Maxmimum size
+    @media (min-width: nth($keys, $length)) {
+        #{$property}: map-get($map, nth($keys, $length));
+    }
+}
+
+/* ==========================================================================
+   # clip-path
+     Usage: @include clip-path($path);
+   ========================================================================== */
+
+@mixin clip-path($clip) {
+    @include prefixProperty(clip-path, $clip);
+}
+// styleguide:ignore:end

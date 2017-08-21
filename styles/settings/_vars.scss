@@ -1,0 +1,54 @@
+﻿/* ==========================================================================
+   Gnatta variables
+   ========================================================================== */
+$primary-color: color(purple, base) !default;
+$primary-color-visited: color(purple, darken-1) !default;
+$primary-color-hover: color(purple, lighten-4) !default;
+$primary-color-active: color(purple, lighten-2) !default;
+$primary-text-color: color(grey, darken-3);
+
+$breakpoint-xsmall-min: 0;
+$breakpoint-xsmall-max: 543px;
+$breakpoint-small-min: 544px;
+$breakpoint-small-max: 767px;
+$breakpoint-medium-min: 768px;
+$breakpoint-medium-max: 991px;
+$breakpoint-large-min: 992px;
+$breakpoint-large-max: 1199px;
+$breakpoint-xlarge-min: 1200px;
+$breakpoint-xlarge-max: 1919px;
+$breakpoint-xxlarge-min: 1920px;
+$xs: width $breakpoint-xsmall-min $breakpoint-xsmall-max;
+$sm: width $breakpoint-small-min $breakpoint-small-max;
+$md: width $breakpoint-medium-min $breakpoint-medium-max;
+$lg: width $breakpoint-large-min $breakpoint-large-max;
+$xl: width $breakpoint-xlarge-min $breakpoint-xlarge-max;
+$xxl: $breakpoint-xxlarge-min;
+$from-xs-xsm: width $breakpoint-xsmall-min $breakpoint-xsmall-max;
+$from-xs-sm: width $breakpoint-xsmall-min $breakpoint-small-max;
+$from-xs-md: width $breakpoint-xsmall-min $breakpoint-medium-max;
+$from-xs-lg: width $breakpoint-xsmall-min $breakpoint-large-max;
+$from-smmin-lgmin: width $breakpoint-small-min $breakpoint-large-min;
+$from-sm-smm: width $breakpoint-small-min $breakpoint-small-max;
+$from-sm-md: width $breakpoint-small-min $breakpoint-medium-max;
+$from-sm-lg: width $breakpoint-small-min $breakpoint-large-max;
+$from-md-lg: width $breakpoint-medium-min $breakpoint-large-max;
+$from-md: min-width $breakpoint-medium-min;
+$from-lg: min-width $breakpoint-large-min;
+$from-lgmin-xlgmin: width $breakpoint-large-min $breakpoint-xlarge-min;
+$from-xlg: min-width $breakpoint-xlarge-min;
+$from-xxlg: min-width $breakpoint-xxlarge-min;
+
+/* Fonts
+   ========================================================================== */
+$fonts-folder: "../Content/fonts/";
+$font-size-base: 16px;
+$primary-font: "Roboto";
+$secondary-font: "Source Sans Pro";
+$primary-font-family: $primary-font, Arial, Helvetica, sans-serif;
+$secondary-font-family: $secondary-font, Calibri, sans;
+
+/* Typography
+   ========================================================================== */
+$base-font-size: 16 !default;
+$base-line-height: 22px;

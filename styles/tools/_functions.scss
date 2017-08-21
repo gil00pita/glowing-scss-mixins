@@ -1,0 +1,278 @@
+// styleguide:ignore:start
+/* ==========================================================================
+   A collection of functions for color adjustments
+   Usage: adjust-lightness(#000, 20%) { }
+   ========================================================================== */
+
+// a genericized version of lighten/darken so that negative values can be used.
+@function adjust-lightness($color, $amount) {
+    //@debug $color;  @debug $amount;
+    @return adjust-color($color, $lightness: $amount);
+}
+
+// Scales a color's lightness by some percentage.
+// If the amount is negative, the color is scaled darker, if positive, it is scaled lighter.
+// This will never return a pure light or dark color unless the amount is 100%.
+@function lighten($color, $amount) {
+    //@debug $color;@debug $amount;
+    @return scale-color($color, $lightness: $amount);
+}
+
+// a genericized version of saturate/desaturate so that negative values can be used.
+@function adjust-saturation($color, $amount) {
+    //@debug $color;@debug $amount;
+    @return adjust-color($color, $saturation: $amount);
+}
+
+// Scales a color's saturation by some percentage.
+// If the amount is negative, the color is desaturated, if positive, it is saturated.
+// This will never return a pure saturated or desaturated color unless the amount is 100%.
+@function darken($color, $amount) {
+    //@debug $color;@debug $amount;
+    @return scale-color($color, $saturation: $amount);
+}
+
+@function shade($color, $percentage) {
+    //@debug $color;@debug $percentage;
+    @return mix(#000000, $color, $percentage);
+}
+
+@function tint($color, $percentage) {
+    //@debug $color;@debug $percentage;
+    @return mix(#ffffff, $color, $percentage);
+}
+
+/* ==========================================================================
+   A collection of function for advanced type checking
+   Usage: @if is-number(14px) { }
+   ========================================================================== */
+
+@function is-number($value) {
+    @return type-of($value) == "number";
+}
+
+@function is-int($value) {
+    @return unitless($value);
+}
+
+@function is-time($value) {
+    @return is-number($value) and index("ms" "s", unit($value)) != null;
+}
+
+@function is-duration($value) {
+    @return is-time($value);
+}
+
+@function is-angle($value) {
+    @return is-number($value) and index("deg" "rad" "grad" "turn", unit($value)) != null;
+}
+
+@function is-frequency($value) {
+    @return is-number($value) and index("Hz" "kHz", unit($value)) != null;
+}
+
+@function is-integer($value) {
+    @return is-number($value) and round($value) == $value;
+}
+
+@function is-relative-length($value) {
+    @return is-number($value) and index("em" "ex" "ch" "rem" "vw" "vh" "vmin" "vmax", unit($value)) != null;
+}
+
+@function is-absolute-length($value) {
+    @return is-number($value) and index("cm" "mm" "in" "px" "pt" "pc", unit($value)) != null;
+}
+
+@function is-percentage($value) {
+    @return is-number($value) and unit($value) == "%";
+}
+
+@function is-length($value) {
+    @return is-relative-length($value) or is-absolute-length($value);
+}
+
+@function is-resolution($value) {
+    @return is-number($value) and index("dpi" "dpcm" "dppx", unit($value)) != null;
+}
+
+@function is-position($value) {
+    @return is-length($value) or is-percentage($value) or index("top" "right" "bottom" "left" "center", $value) != null;
+}
+
+/* ==========================================================================
+   Convert px to REM
+   Usage: @include rem(14px)
+   ========================================================================== */
+
+/// Power function
+/// @param {Number} $x
+/// @param {Number} $n
+/// @return {Number}
+@function pow($x, $n) {
+    $ret: 1;
+
+    @if $n >= 0 {
+        @for $i from 1 through $n {
+            $ret: $ret * $x;
+        }
+    }
+    @else {
+        @for $i from $n to 0 {
+            $ret: $ret / $x;
+        }
+    }
+
+    @return $ret;
+}
+
+// Strips units
+@function stripunits($value) {
+    @return ($value) / ($value * 0 + 1);
+}
+
+@function num($input) {
+    @if type-of($input) != number {
+        @error "Could not convert `#{$input}` - must be `type-of number`";
+        @return null;
+    }
+    @return $input/($input*0+1);
+}
+
+@function pxToRem($size, $context: $base-font-size) {
+    //@debug stripUnits($size) /$context * 1rem;
+    @return stripunits($size) / $context * 1rem;
+}
+
+@function rem($sizes...) {
+    $rems: ();
+    @if length($sizes) > 1 {
+        @for $value from 1 through length($sizes) {
+            @if (unit(nth($sizes, $value )) == "%") {
+                $rems: append($rems, nth($sizes, $value));
+            }
+            @else {
+                $rems: append($rems, pxToRem(stripunits($value)));
+            }
+        }
+        @return #{$rems};
+    }
+    @else if (length($sizes) == 1) {
+        $onlyOne: nth($sizes, 1);
+
+        @if ($onlyOne == 0) or ($onlyOne == "0px") or ($onlyOne == "0") {
+            @return $onlyOne;
+        }
+        @else if (validate($onlyOne, measure)) {
+            @return pxToRem($onlyOne);
+        }
+        @else if (validate($onlyOne, number)) {
+            //@debug calculateRem($onlyOne);
+            @return pxToRem($onlyOne);
+        }
+        @else {
+            @warn "rem: " $onlyOne validate($onlyOne, unit) "Error with the rem conversion: unit measure is not valid!";
+            @return $onlyOne;
+        }
+    }
+    @else {
+        @warn "rem: Error with the rem conversion: no items to convert!";
+    }
+}
+
+@function pxToEm($size, $context: $base-font-size) {
+    //@debug stripUnits($size) /$context * 1rem;
+    // @return stripunits($size) / $context * 1rem;
+
+    @if (unitless($pixels)) {
+        $pixels: $pixels * 1px;
+    }
+
+    @if (unitless($context)) {
+        $context: $context * 1px;
+    }
+
+    @return $pixels / $context * 1em;
+}
+
+/// list-remove
+/// Remove an item from a list
+/// @param $list - A SASS list
+/// @param $index - The list index to remove
+/// @returns A SASS list
+/// @author Jake Wilson <jake.e.wilson@gmail.com>
+@function list-remove($list, $index) {
+    $newList: ();
+    @for $i from 1 through length($list) {
+        @if $i != $index {
+            $newList: append($newList, nth($list, $i), "space");
+        }
+    }
+    @return $newList;
+}
+
+/// linear-interpolation
+/// Calculate the definition of a line between two points
+/// @param $map - A SASS map of viewport widths and size value pairs
+/// @returns A linear equation as a calc() function
+/// @example
+///   font-size: linear-interpolation((320px: 18px, 768px: 26px));
+/// @author Jake Wilson <jake.e.wilson@gmail.com>
+@function linear-interpolation($map) {
+    $keys: map-keys($map);
+    @if (length($keys) != 2) {
+        @error "linear-interpolation() $map must be exactly 2 values";
+    }
+    // The slope
+    $m: (map-get($map, nth($keys, 2)) - map-get($map, nth($keys, 1))) / (nth($keys, 2) - nth($keys, 1));
+
+    // The y-intercept
+    $b: map-get($map, nth($keys, 1)) - $m * nth($keys, 1);
+
+    // Determine if the sign should be positive or negative
+    $sign: "+";
+    @if ($b < 0) {
+        $sign: "-";
+        $b: abs($b);
+    }
+    /* stylelint-disable */
+    @return calc(#{$m*100}vw #{$sign} #{$b});
+    /* stylelint-enable */
+}
+
+/// list-sort
+/// Sort a SASS list
+/// @param $list - A SASS list
+/// @returns A sorted SASS list
+/// @requires function list-remove
+/// @author Jake Wilson <jake.e.wilson@gmail.com>
+@function list-sort($list) {
+    $sortedlist: ();
+    @while length($list) > 0 {
+        $value: nth($list, 1);
+        @each $item in $list {
+            @if $item < $value {
+                $value: $item;
+            }
+        }
+        $sortedlist: append($sortedlist, $value, "space");
+        $list: list-remove($list, index($list, $value));
+    }
+    @return $sortedlist;
+}
+
+/// map-sort
+/// Sort map by keys
+/// @param $map - A SASS map
+/// @returns A SASS map sorted by keys
+/// @requires function list-sort
+/// @author Jake Wilson <jake.e.wilson@gmail.com>
+@function map-sort($map) {
+    $keys: list-sort(map-keys($map));
+    $sortedMap: ();
+    @each $key in $keys {
+        $sortedMap: map-merge($sortedMap, ($key: map-get($map, $key)));
+    }
+    @return $sortedMap;
+}
+
+// styleguide:ignore:end

@@ -1,0 +1,22 @@
+@charset "UTF-8";
+
+/* ==========================================================================
+   # Main Imports
+   ========================================================================== */
+
+// styleguide:ignore:start
+// Parent section
+//
+// markup:
+// <div class="parent"></div>
+//
+// sg-wrapper:
+// <div class="parent-wrapper">
+//   <sg-wrapper-content/>
+// </div>
+//
+// Styleguide 1.0
+// settings & tools
+@import "settings/vars",
+    "tools/functions",
+    "tools/mixins";
