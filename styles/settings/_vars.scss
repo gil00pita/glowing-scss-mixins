@@ -1,12 +1,6 @@
 ﻿/* ==========================================================================
    Gnatta variables
    ========================================================================== */
-$primary-color: color(purple, base) !default;
-$primary-color-visited: color(purple, darken-1) !default;
-$primary-color-hover: color(purple, lighten-4) !default;
-$primary-color-active: color(purple, lighten-2) !default;
-$primary-text-color: color(grey, darken-3);
-
 $breakpoint-xsmall-min: 0;
 $breakpoint-xsmall-max: 543px;
 $breakpoint-small-min: 544px;
@@ -41,14 +35,7 @@ $from-xxlg: min-width $breakpoint-xxlarge-min;
 
 /* Fonts
    ========================================================================== */
-$fonts-folder: "../Content/fonts/";
-$font-size-base: 16px;
-$primary-font: "Roboto";
-$secondary-font: "Source Sans Pro";
-$primary-font-family: $primary-font, Arial, Helvetica, sans-serif;
-$secondary-font-family: $secondary-font, Calibri, sans;
 
-/* Typography
-   ========================================================================== */
-$base-font-size: 16 !default;
+$font-size-base: 16px;
+$base-font-size: $font-size-base !default;
 $base-line-height: 22px;
