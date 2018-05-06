@@ -138,45 +138,76 @@
     @return $input/($input*0+1);
 }
 
-@function pxToRem($size, $context: $base-font-size) {
-    //@debug stripUnits($size) /$context * 1rem;
-    @return stripunits($size) / $context * 1rem;
+$rem-fallback: false !default;
+$rem-px-only: false !default;
+
+@function rem-separator($list, $separator: false) {
+  @if $separator == "comma" or $separator == "space" {
+    @return append($list, null, $separator);
+  } 
+  
+  @if function-exists("list-separator") == true {
+    @return list-separator($list);
+  }
+
+  // list-separator polyfill by Hugo Giraudel (https://sass-compatibility.github.io/#list_separator_function)
+  $test-list: ();
+  @each $item in $list {
+    $test-list: append($test-list, $item, space);
+  }
+
+  @return if($test-list == $list, space, comma);
 }
 
-@function rem($sizes...) {
-    $rems: ();
-    @if length($sizes) > 1 {
-        @for $value from 1 through length($sizes) {
-            @if (unit(nth($sizes, $value )) == "%") {
-                $rems: append($rems, nth($sizes, $value));
-            }
-            @else {
-                $rems: append($rems, pxToRem(stripunits($value)));
-            }
-        }
-        @return #{$rems};
-    }
-    @else if (length($sizes) == 1) {
-        $onlyOne: nth($sizes, 1);
+@mixin rem-baseline($zoom: 100%) {
+  font-size: $zoom / 16px * $font-size-base;
+}
 
-        @if ($onlyOne == 0) or ($onlyOne == "0px") or ($onlyOne == "0") {
-            @return $onlyOne;
-        }
-        @else if (validate($onlyOne, measure)) {
-            @return pxToRem($onlyOne);
-        }
-        @else if (validate($onlyOne, number)) {
-            //@debug calculateRem($onlyOne);
-            @return pxToRem($onlyOne);
-        }
-        @else {
-            @warn "rem: " $onlyOne validate($onlyOne, unit) "Error with the rem conversion: unit measure is not valid!";
-            @return $onlyOne;
-        }
+@function rem-convert($to, $values...) {
+  $result: ();
+  $separator: rem-separator($values);
+  
+  @each $value in $values {
+    @if type-of($value) == "number" and unit($value) == "rem" and $to == "px" {
+      $result: append($result, $value / 1rem * $font-size-base, $separator);
+    } @else if type-of($value) == "number" and unit($value) == "px" and $to == "rem" {
+      $result: append($result, $value / $font-size-base * 1rem, $separator);
+    } @else if type-of($value) == "list" {
+      $value-separator: rem-separator($value);
+      $value: rem-convert($to, $value...);
+      $value: rem-separator($value, $value-separator);
+      $result: append($result, $value, $separator);
+    } @else {
+      $result: append($result, $value, $separator);
     }
-    @else {
-        @warn "rem: Error with the rem conversion: no items to convert!";
+  }
+
+  @return if(length($result) == 1, nth($result, 1), $result);
+}
+
+@function rem($values...) {
+  @if $rem-px-only {
+    @return rem-convert(px, $values...);
+  } @else {
+    @return rem-convert(rem, $values...);
+  }
+}
+
+@mixin rem($properties, $values...) {
+  @if type-of($properties) == "map" {
+    @each $property in map-keys($properties) {
+      @include rem($property, map-get($properties, $property));
     }
+  } @else {
+    @each $property in $properties {
+      @if $rem-fallback or $rem-px-only {
+        #{$property}: rem-convert(px, $values...);
+      }
+      @if not $rem-px-only {
+        #{$property}: rem-convert(rem, $values...);
+      }
+    }
+  }
 }
 
 @function pxToEm($size, $context: $base-font-size) {
